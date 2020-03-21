@@ -31,16 +31,18 @@
 #include "http.h"
 
 #ifdef CRYPTO
-#ifdef USE_POLARSSL
-#include <polarssl/sha2.h>
+#ifdef USE_MBEDTLS
+#include <mbedtls/md.h>
 #ifndef SHA256_DIGEST_LENGTH
 #define SHA256_DIGEST_LENGTH	32
 #endif
-#define HMAC_CTX	sha2_context
-#define HMAC_setup(ctx, key, len)	sha2_hmac_starts(&ctx, (unsigned char *)key, len, 0)
-#define HMAC_crunch(ctx, buf, len)	sha2_hmac_update(&ctx, buf, len)
-#define HMAC_finish(ctx, dig, dlen)	dlen = SHA256_DIGEST_LENGTH; sha2_hmac_finish(&ctx, dig)
-#define HMAC_close(ctx)
+#define HMAC_CTX	md_context_t
+#define HMAC_setup(ctx, key, len)	md_init(&ctx); \
+									md_init_ctx(&ctx, md_info_from_type(MBEDTLS_MD_SHA256)); \
+									md_hmac_starts(&ctx, (const unsigned char *)key, len)
+#define HMAC_crunch(ctx, buf, len)	md_hmac_update(&ctx, buf, len)
+#define HMAC_finish(ctx, dig, dlen)	dlen = SHA256_DIGEST_LENGTH; md_hmac_finish(&ctx, dig)
+#define HMAC_close(ctx)				md_free(&ctx);
 #elif defined(USE_GNUTLS)
 #include <nettle/hmac.h>
 #ifndef SHA256_DIGEST_LENGTH

@@ -33,10 +33,10 @@
 #include "log.h"
 
 #ifdef CRYPTO
-#ifdef USE_POLARSSL
-#include <polarssl/havege.h>
-#include <polarssl/md5.h>
-#include <polarssl/base64.h>
+#ifdef USE_MBEDTLS
+#include <mbedtls/havege.h>
+#include <mbedtls/md5.h>
+#include <mbedtls/base64.h>
 #define MD5_DIGEST_LENGTH 16
 
 static const char *my_dhm_P =
@@ -228,7 +228,7 @@ void
 RTMP_TLS_Init()
 {
 #ifdef CRYPTO
-#ifdef USE_POLARSSL
+#ifdef USE_MBEDTLS
   /* Do this regardless of NO_SSL, we use havege for rtmpe too */
   RTMP_TLS_ctx = calloc(1,sizeof(struct tls_ctx));
   havege_init(&RTMP_TLS_ctx->hs);
@@ -262,17 +262,21 @@ RTMP_TLS_AllocServerContext(const char* cert, const char* key)
 #ifdef CRYPTO
   if (!RTMP_TLS_ctx)
     RTMP_TLS_Init();
-#ifdef USE_POLARSSL
+#ifdef USE_MBEDTLS
   tls_server_ctx *tc = ctx = calloc(1, sizeof(struct tls_server_ctx));
   tc->dhm_P = my_dhm_P;
   tc->dhm_G = my_dhm_G;
   tc->hs = &RTMP_TLS_ctx->hs;
-  if (x509parse_crtfile(&tc->cert, cert)) {
+  x509_crt_init(&tc->cert);
+  if (x509_crt_parse_file(&tc->cert, cert)) {
+      x509_crt_free(&tc->cert);
       free(tc);
       return NULL;
   }
-  if (x509parse_keyfile(&tc->key, key, NULL)) {
-      x509_free(&tc->cert);
+  pk_init(&tc->key);
+  if (pk_parse_keyfile(&tc->key, key, NULL)) {
+      x509_crt_free(&tc->cert);
+      pk_free(&tc->key);
       free(tc);
       return NULL;
   }
@@ -301,9 +305,9 @@ void
 RTMP_TLS_FreeServerContext(void *ctx)
 {
 #ifdef CRYPTO
-#ifdef USE_POLARSSL
-  x509_free(&((tls_server_ctx*)ctx)->cert);
-  rsa_free(&((tls_server_ctx*)ctx)->key);
+#ifdef USE_MBEDTLS
+  x509_crt_free(&((tls_server_ctx*)ctx)->cert);
+  pk_free(&((tls_server_ctx*)ctx)->key);
   free(ctx);
 #elif defined(USE_GNUTLS) && !defined(NO_SSL)
   gnutls_certificate_free_credentials(ctx);
@@ -2438,9 +2442,9 @@ AV_clear(RTMP_METHOD *vals, int num)
 static int
 b64enc(const unsigned char *input, int length, char *output, int maxsize)
 {
-#ifdef USE_POLARSSL
+#ifdef USE_MBEDTLS
   size_t buf_size = maxsize;
-  if(base64_encode((unsigned char *) output, &buf_size, input, length) == 0)
+  if(base64_encode((unsigned char *) output, buf_size, &buf_size, input, length) == 0)
     {
       output[buf_size] = '\0';
       return 1;
@@ -2482,7 +2486,7 @@ b64enc(const unsigned char *input, int length, char *output, int maxsize)
   return 1;
 }
 
-#ifdef USE_POLARSSL
+#ifdef USE_MBEDTLS
 #define MD5_CTX	md5_context
 #define MD5_Init(ctx)	md5_starts(ctx)
 #define MD5_Update(ctx,data,len)	md5_update(ctx,(unsigned char *)data,len)
