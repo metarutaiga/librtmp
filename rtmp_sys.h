@@ -24,14 +24,14 @@
 
 #ifdef _WIN32
 
+#include <sys/types.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-#ifdef _MSC_VER	/* MSVC */
-#define snprintf _snprintf
+#ifdef _MSC_VER    /* MSVC */
 #define strcasecmp stricmp
 #define strncasecmp strnicmp
-#define vsnprintf _vsnprintf
+#undef _DEBUG
 #endif
 
 #define GetSockError()	WSAGetLastError()
