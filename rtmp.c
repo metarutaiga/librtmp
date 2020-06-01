@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <limits.h>
 #include <time.h>
 
 #include "rtmp_sys.h"
