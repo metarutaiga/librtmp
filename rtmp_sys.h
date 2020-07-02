@@ -100,7 +100,7 @@ typedef struct tls_server_ctx {
 	SSL_SET_SESSION(s, 1, 600, &((tls_server_ctx*)ctx)->ssn);\
 	ssl_set_own_cert(s, &((tls_server_ctx*)ctx)->cert, &((tls_server_ctx*)ctx)->key);\
 	ssl_set_dh_param(s, ((tls_server_ctx*)ctx)->dhm_P, ((tls_server_ctx*)ctx)->dhm_G)
-#define TLS_setfd(s,fd)	ssl_set_bio(s, net_recv, &fd, net_send, &fd)
+#define TLS_setfd(s,fd)	ssl_set_bio(s, &fd, net_send, net_recv, NULL)
 #define TLS_connect(s)	ssl_handshake(s)
 #define TLS_accept(s)	ssl_handshake(s)
 #define TLS_read(s,b,l)	ssl_read(s,(unsigned char *)b,l)
