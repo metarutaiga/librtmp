@@ -32,6 +32,7 @@
 #define strcasecmp stricmp
 #define strncasecmp strnicmp
 #undef _DEBUG
+#undef EWOULDBLOCK
 #endif
 
 #define GetSockError()	WSAGetLastError()
