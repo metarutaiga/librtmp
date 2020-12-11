@@ -3626,8 +3626,11 @@ RTMP_ReadPacket(RTMP *r, RTMPPacket *packet)
   else if (nSize < RTMP_LARGE_HEADER_SIZE)
     {				/* using values from the last message of this channel */
       if (r->m_vecChannelsIn[packet->m_nChannel])
-	memcpy(packet, r->m_vecChannelsIn[packet->m_nChannel],
-	       sizeof(RTMPPacket));
+        {
+          memcpy(packet, r->m_vecChannelsIn[packet->m_nChannel],
+              sizeof(RTMPPacket));
+          r->m_vecChannelsIn[packet->m_nChannel]->m_body = NULL;
+        }
     }
 
   nSize--;
